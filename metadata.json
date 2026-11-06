@@ -1,0 +1,8 @@
+{
+  "name": "YouTube Video Structure & Content Analyzer",
+  "description": "KI-gestützte Komplettanalyse von YouTube-Videos: Inhalt, visuelle Darstellung, Dramaturgie und detaillierter Kapitel-Strukturplan in XR und Web-Studio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

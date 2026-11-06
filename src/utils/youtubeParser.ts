@@ -1,3 +1,5 @@
+import { VideoAnalysisResult } from '../types';
+
 /**
  * YouTube URL & Timestamp Parsing Utilities
  */
@@ -11,6 +13,12 @@ export interface ChapterItem {
   purpose?: string;
   retentionImpact?: string;
   visualElement?: string;
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
 }
 
 /**
@@ -140,4 +148,109 @@ export function calculatePacingMetrics(chapters: ChapterItem[]) {
     chapterCount: chapters.length,
     pacingRating,
   };
+}
+
+/**
+ * Validates YouTube upload metadata (Title, Description, Tags, Chapters).
+ */
+export function validateUploadMetadata(params: {
+  title: string;
+  description: string;
+  tags: string;
+}): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  const titleTrimmed = (params.title || '').trim();
+  const descTrimmed = (params.description || '').trim();
+  const tagsTrimmed = (params.tags || '').trim();
+
+  if (titleTrimmed.length === 0) {
+    errors.push('Titel darf nicht leer sein.');
+  } else if (titleTrimmed.length > 100) {
+    errors.push(`Titel überschreitet 100 Zeichen (${titleTrimmed.length}/100).`);
+  }
+
+  if (descTrimmed.length === 0) {
+    errors.push('Beschreibung darf nicht leer sein.');
+  } else {
+    if (!descTrimmed.includes('0:00')) {
+      warnings.push('Für anklickbare YouTube-Kapitel muss der erste Zeitstempel bei 0:00 beginnen.');
+    }
+    const timestampMatches = descTrimmed.match(/\b\d{1,2}:\d{2}\b/g) || [];
+    if (timestampMatches.length < 3) {
+      warnings.push('YouTube erfordert mindestens 3 Kapitelmarken in aufsteigender Reihenfolge.');
+    }
+  }
+
+  if (tagsTrimmed.length === 0) {
+    warnings.push('Keine Tags angegeben. Empfohlen sind 5–15 relevante Keywords.');
+  } else if (tagsTrimmed.length > 500) {
+    errors.push(`Tags überschreiten das Limit von 500 Zeichen (${tagsTrimmed.length}/500).`);
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+/**
+ * Generates a Markdown report for the complete video analysis and structure plan.
+ */
+export function buildMarkdownReport(data: VideoAnalysisResult): string {
+  return `# YouTube Video-Strukturplan & Analyse: ${data.meta.title}
+**Autor:** ${data.meta.author} | **Dauer:** ${data.meta.estimatedDuration || '4:12'} | **Score:** ${data.meta.overallRating ?? 9.2}/10
+
+---
+
+## 1. Inhaltliche Zusammenfassung
+### ${data.summary.headline}
+${data.summary.executiveSummary}
+
+**Zielgruppe:** ${data.summary.targetAudience}
+
+### Kernbotschaften & Takeaways:
+${data.summary.keyTakeaways.map((t, i) => `${i + 1}. ${t}`).join('\n')}
+
+---
+
+## 2. Detaillierter Strukturplan (Kapitel & Zeitstempel)
+| Zeitstempel | Phase | Kapitel | Inhaltlicher Zweck | Visuelle Gestaltung | Retention |
+|---|---|---|---|---|---|
+${data.structurePlan
+  .map(
+    (c) =>
+      `| ${c.timestamp} | ${c.phase} | ${c.title} | ${c.purpose || ''} | ${c.visualElement || ''} | ${c.retentionImpact || ''} |`
+  )
+  .join('\n')}
+
+---
+
+## 3. Darstellungs- & Regie-Analyse
+- **Visuelles Format:** ${data.presentationAnalysis.visualStyle}
+- **Kamera & Licht:** ${data.presentationAnalysis.cameraAndLighting}
+- **Grafiken & B-Roll:** ${data.presentationAnalysis.graphicsAndBroll}
+- **Pacing & Schnittfrequenz:** ${data.presentationAnalysis.pacingAndTempo}
+- **Sprechtempo & Audio:** ${data.presentationAnalysis.speakerDelivery} | ${data.presentationAnalysis.audioQuality}
+
+---
+
+## 4. Dramaturgie & Hook
+- **Hook (Erste 30 Sek.):** ${data.dramaturgy.hookAnalysis}
+- **Handlungsbogen:** ${data.dramaturgy.storytellingArc}
+- **Retention-Tricks:** ${data.dramaturgy.retentionTactics}
+- **Call-to-Action (CTA):** ${data.dramaturgy.ctaEffectiveness}
+
+---
+
+## 5. YouTube-Upload-Beschreibung
+\`\`\`
+${data.uploadPackage.suggestedDescription}
+\`\`\`
+
+**Tags:**
+\`${data.uploadPackage.tags}\`
+`;
 }

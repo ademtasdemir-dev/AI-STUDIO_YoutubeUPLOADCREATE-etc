@@ -9,6 +9,24 @@ export interface Chapter {
   visualElement?: string;
 }
 
+export interface TranscriptSegment {
+  id: string;
+  startTime: string;
+  endTime: string;
+  startSeconds: number;
+  endSeconds: number;
+  speaker: string;
+  speakerRole?: string;
+  text: string;
+}
+
+export interface SpeakerProfile {
+  id: string;
+  name: string;
+  role: string;
+  voiceCharacteristics: string;
+}
+
 export interface TitleAlternative {
   title: string;
   strategy: string;
@@ -70,6 +88,8 @@ export interface VideoAnalysisResult {
   titleAnalysis: TitleAnalysis;
   summary: ContentSummary;
   structurePlan: Chapter[];
+  transcript?: TranscriptSegment[];
+  speakers?: SpeakerProfile[];
   presentationAnalysis: PresentationAnalysis;
   dramaturgy: DramaturgyAnalysis;
   uploadPackage: UploadPackage;
